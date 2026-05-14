@@ -11,5 +11,8 @@ class Question extends Model
     {
         return $this->belongsTo(Field::class);
     }
-    
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class);
+    }
 }
