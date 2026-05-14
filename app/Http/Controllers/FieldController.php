@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Field;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FieldController extends Controller
 {
@@ -16,12 +17,27 @@ class FieldController extends Controller
     //add fieled
     public function store(Request $request)
     {
+        $request->validate([
+            'name' => 'required|string',
+            'description' => 'required|string',
+            'supervisors' => 'required|array',
+            'supervisors.*' => [
+                'required',
+                Rule::exists('users', 'id')->where('role', 'supervisor'),
+            ],
+        ]);
+
         $field = Field::create([
             'name' => $request->name,
             'description' => $request->description
         ]);
 
-        return response()->json($field, 201);
+        $field->supervisors()->attach($request->supervisors);
+
+        return response()->json([
+            'message' => 'Field created successfully',
+            'field' => $field->load('supervisors')
+        ], 201);
     }
     //update
     public function update(Request $request, $id)
