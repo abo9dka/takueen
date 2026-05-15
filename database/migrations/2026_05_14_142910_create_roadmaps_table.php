@@ -12,15 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('roadmaps', function (Blueprint $table) {
-        $table->id();
-        $table->string('title');
-        $table->text('description')->nullable();
-        $table->boolean('ai_generated')->default(false);
-        $table->foreignId('field_id')
-          ->constrained('fields')
-          ->cascadeOnDelete();
-        $table->timestamps();
-});
+            $table->id();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->boolean('ai_generated')->default(false);
+            $table->foreignId('field_id')
+                ->constrained('fields')
+                ->cascadeOnDelete();
+            $table->timestamps();
+        });
     }
 
     /**
@@ -28,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-       Schema::dropIfExists('roadmaps');
+        Schema::dropIfExists('roadmaps');
     }
 };

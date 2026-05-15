@@ -12,16 +12,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('roadmap_stages', function (Blueprint $table) {
-        $table->id();
-        $table->text('stage_description');
-        $table->integer('stage_order');
-        $table->text('requirements')->nullable();
-        $table->foreignId('roadmap_id')
-          ->constrained('roadmaps')
-          ->cascadeOnDelete();
-          
-        $table->timestamps();   
-});
+            $table->id();
+            $table->text('stage_description');
+            $table->integer('stage_order');
+            $table->text('requirements')->nullable();
+            $table->foreignId('roadmap_id')
+                ->constrained('roadmaps')
+                ->cascadeOnDelete();
+
+            $table->timestamps();
+        });
     }
 
     /**

@@ -12,7 +12,6 @@ class RoadmapStageController extends Controller
         $stage = RoadmapStage::with('roadmap.field')->findOrFail($id);
         return response()->json($stage);
     }
-
     public function store(Request $request)
     {
         $request->validate([
@@ -26,7 +25,6 @@ class RoadmapStageController extends Controller
         $stage->load('roadmap.field');
         return response()->json($stage, 201);
     }
-
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -41,7 +39,6 @@ class RoadmapStageController extends Controller
         $stage->load('roadmap.field');
         return response()->json($stage);
     }
-
     public function destroy($id)
     {
         $stage = RoadmapStage::where('id', $id)->firstOrFail();
