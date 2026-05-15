@@ -19,12 +19,16 @@ class Roadmap extends Model
         'ai_generated',
         'field_id'
     ];
-    
+
     public function field()
     {
         return $this->belongsTo(Field::class, 'field_id');
     }
-   
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
     public function stages()
     {
         return $this->hasMany(RoadmapStage::class, 'roadmap_id');
