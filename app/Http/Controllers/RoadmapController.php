@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Field;
+use App\Models\Roadmap;
 use App\Models\RoadmapStage;
 use Illuminate\Http\Request;
-use App\Models\Roadmap;
 use Illuminate\Support\Facades\Http;
 
 class RoadmapController extends Controller
@@ -13,7 +13,7 @@ class RoadmapController extends Controller
     public function index()
     {
         return response()->json(
-            Roadmap::with('field', 'stages')->get()
+            Roadmap::with('field', 'stages', 'supervisor')->get()
         );
     }
 
@@ -26,40 +26,55 @@ class RoadmapController extends Controller
             'ai_generated' => 'boolean',
         ]);
 
-        $roadmap = Roadmap::create($request->all());
+        $roadmap = Roadmap::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'field_id' => $request->field_id,
+            'supervisor_id' => $request->user()->id,
+            'ai_generated' => $request->ai_generated ?? false,
+        ]);
 
-        $roadmap->load('field', 'stages');
-
-        return response()->json($roadmap, 201);
+        return response()->json(
+            $roadmap->load('field', 'stages', 'supervisor'),
+            201
+        );
     }
 
     public function show($id)
     {
-        $roadmap = Roadmap::with('field', 'stages')->findOrFail($id);
+        $roadmap = Roadmap::with('field', 'stages', 'supervisor')
+            ->findOrFail($id);
 
         return response()->json($roadmap);
     }
 
     public function update(Request $request, $id)
     {
-        $roadmap = Roadmap::where('id', $id)->firstOrFail();
+        $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'description' => 'sometimes|nullable|string',
+            'field_id' => 'sometimes|exists:fields,id',
+        ]);
 
-        $roadmap->update($request->all());
+        $roadmap = Roadmap::findOrFail($id);
 
-        $roadmap->load('field', 'stages');
+        $roadmap->update([
+            'title' => $request->title ?? $roadmap->title,
+            'description' => $request->description ?? $roadmap->description,
+            'field_id' => $request->field_id ?? $roadmap->field_id,
+        ]);
 
-        return response()->json($roadmap);
+        return response()->json(
+            $roadmap->load('field', 'stages', 'supervisor')
+        );
     }
 
     public function destroy($id)
     {
-        $roadmap = Roadmap::where('id', $id)->firstOrFail();
-
+        $roadmap = Roadmap::findOrFail($id);
         $roadmap->delete();
 
-        return response()->json([
-            'message' => 'Deleted'
-        ]);
+        return response()->json(['message' => 'Deleted']);
     }
 
     public function aiGenerate(Request $request)
@@ -72,20 +87,10 @@ class RoadmapController extends Controller
         $field = Field::findOrFail($request->field_id);
 
         $prompt = "
-You are a strict JSON generator.
-
 Generate a learning roadmap for {$field->name}.
-
 Level: {$request->level}
 
-RULES:
-- Return ONLY valid JSON
-- NO markdown
-- NO code blocks
-- NO explanations
-- NO extra text
-
-FORMAT:
+Return ONLY JSON:
 {
   \"title\": \"...\",
   \"description\": \"...\",
@@ -109,10 +114,7 @@ FORMAT:
         ])->post('https://api.groq.com/openai/v1/chat/completions', [
             'model' => 'llama-3.1-8b-instant',
             'messages' => [
-                [
-                    'role' => 'user',
-                    'content' => $prompt
-                ]
+                ['role' => 'user', 'content' => $prompt]
             ],
             'temperature' => 0.2
         ]);
@@ -120,21 +122,13 @@ FORMAT:
         $content = $response->json()['choices'][0]['message']['content'] ?? null;
 
         if (!$content) {
-            return response()->json([
-                'message' => 'Empty AI response'
-            ], 500);
+            return response()->json(['message' => 'Empty AI response'], 500);
         }
 
-        $content = trim($content);
+        $content = trim(preg_replace('/```json|```/', '', $content));
 
-        $content = preg_replace('/```json|```/', '', $content);
-
-        // استخراج JSON object
         preg_match('/\{[\s\S]*\}/', $content, $matches);
-
-        $json = $matches[0] ?? null;
-
-        $data = json_decode($json, true);
+        $data = json_decode($matches[0] ?? null, true);
 
         if (!$data || !isset($data['stages'])) {
             return response()->json([
@@ -143,19 +137,16 @@ FORMAT:
             ], 500);
         }
 
-        // create roadmap
         $roadmap = Roadmap::create([
-            'title' => $data['title'] ?? 'No title',
-            'description' => $data['description'] ?? 'No description',
+            'title' => $data['title'],
+            'description' => $data['description'],
             'field_id' => $request->field_id,
-            'ai_generated' => true
+            'supervisor_id' => $request->user()->id,
+            'ai_generated' => true,
         ]);
 
-        $createdStages = [];
-
-        // create stages
         foreach ($data['stages'] as $stage) {
-            $createdStages[] = RoadmapStage::create([
+            RoadmapStage::create([
                 'roadmap_id' => $roadmap->id,
                 'stage_order' => $stage['stage_order'] ?? 0,
                 'stage_description' => $stage['stage_description'] ?? '',
@@ -163,12 +154,9 @@ FORMAT:
             ]);
         }
 
-        $roadmap->load('field', 'stages');
-
         return response()->json([
             'message' => 'Roadmap generated successfully',
-            'roadmap' => $roadmap,
-            'stages_count' => count($createdStages)
+            'roadmap' => $roadmap->load('field', 'stages', 'supervisor')
         ], 201);
     }
 }

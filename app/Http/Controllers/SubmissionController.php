@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Competition;
+use App\Models\Contest;
 use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -167,10 +169,13 @@ Return ONLY valid JSON (no markdown, no text):
             'feedback' => $feedback,
         ]);
 
+        $contest = Competition::where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
 
-
-        if ($newStatus === 'accepted') {
+        if ($newStatus === 'accepted' && $contest) {
             $pivot = DB::table('contest_question')
+                ->where('contest_id', $contest->id)
                 ->where('question_id', $submission->question_id)
                 ->first();
         }

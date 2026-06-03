@@ -20,6 +20,15 @@ class Field extends Model
 
     public function supervisors()
     {
-        return $this->belongsToMany(User::class, 'field_user');
+        return $this->belongsToMany(User::class)
+            ->where('role', 'supervisor');
+    }
+    public function userLevels()
+    {
+        return $this->hasMany(UserFieldLevel::class);
+    }
+    public function roadmaps()
+    {
+        return $this->hasMany(Roadmap::class);
     }
 }

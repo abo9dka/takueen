@@ -16,8 +16,11 @@ return new class extends Migration {
             $table->enum('role', ['trainer', 'supervisor', 'admin'])->default('trainer');
             $table->enum('level', ['beginner', 'intermediate', 'advanced'])->nullable();
             $table->string('profile_picture')->nullable();
+            $table->string('description')->nullable();
+            $table->foreignId('supervisor_id')->nullable()->constrained('users')->onDelete('set null');
             $table->integer('points')->default(0);
             $table->integer('streak')->default(0);
+            $table->string('tag')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
