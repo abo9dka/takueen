@@ -72,7 +72,7 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role
+                'role' => $user->role,
             ]
         ]);
     }
@@ -141,21 +141,27 @@ class AuthController extends Controller
     public function createSupervisor(Request $request)
     {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8'
+            'password' => 'required|min:8|confirmed',
+            'description' => 'required|string',
+            'fields' => 'required|array',
+            'fields.*' => 'exists:fields,id',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'supervisor'
+            'role' => 'supervisor',
+            'description' => $request->description,
         ]);
 
+        $user->fields()->attach($request->fields);
+
         return response()->json([
-            'message' => 'Supervisor created successfully',
-            'user' => $user
+            'message' => 'Supervisor created and assigned to fields',
+            'user' => $user->load('fields')
         ], 201);
     }
 }

@@ -19,33 +19,52 @@ class User extends Authenticatable
         return $this->hasMany(Submission::class);
     }
 
+    public function competitions()
+    {
+        return $this->hasMany(Competition::class);
+    }
+
+    public function supervisedCompetitions()
+    {
+        return $this->hasMany(Competition::class, 'supervisor_id');
+    }
+
+    public function projectSubmissions()
+    {
+        return $this->hasMany(ProjectSubmission::class);
+    }
+
+    public function fieldLevels()
+    {
+        return $this->hasMany(UserFieldLevel::class);
+    }
+
+
+    public function fields()
+    {
+        return $this->belongsToMany(Field::class);
+    }
+
     public function roadmaps()
     {
-        return $this->hasMany(Roadmap::class);
+        return $this->hasMany(Roadmap::class, 'supervisor_id');
     }
-
-    public function isTrainee(): bool
+    public function trainees()
     {
-        return $this->role === 'trainer';
+        return $this->hasMany(User::class, 'supervisor_id');
     }
 
-    public function isSupervisor(): bool
+    public function supervisor()
     {
-        return $this->role === 'supervisor';
+        return $this->belongsTo(User::class, 'supervisor_id');
     }
-
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
-
     protected $fillable = [
         'name',
         'email',
         'password',
         'role',
+        'description',
     ];
-
     protected $hidden = [
         'password',
         'remember_token',

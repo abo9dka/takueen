@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fields', function (Blueprint $table) {
+        Schema::create('roadmap_stages', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('description');
-            $table->string('image')->nullable();
+            $table->text('stage_description');
+            $table->integer('stage_order');
+            $table->text('requirements')->nullable();
+            $table->foreignId('roadmap_id')->constrained('roadmaps')->cascadeOnDelete();
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fields');
+        Schema::dropIfExists('roadmap_stages');
     }
 };

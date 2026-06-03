@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Field;
 use App\Models\Question;
+use App\Models\Submission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -12,12 +13,14 @@ class QuestionController extends Controller
     public function index()
     {
         $question = Question::with('field')->get();
+
         return response()->json($question, 200);
     }
 
     public function show($id)
     {
         $question = Question::findOrFail($id);
+
         return response()->json($question, 200);
     }
 
@@ -27,14 +30,16 @@ class QuestionController extends Controller
             'field_id' => 'required|exists:fields,id',
             'title' => 'required',
             'description' => 'required',
-            'difficulty' => 'required'
+            'difficulty' => 'required',
+            'is_placement' => 'required|boolean'
         ]);
 
         $question = Question::create([
             'field_id' => $request->field_id,
             'title' => $request->title,
             'description' => $request->description,
-            'difficulty' => $request->difficulty
+            'difficulty' => $request->difficulty,
+            'is_placement' => $request->is_placement
         ]);
 
         return response()->json($question, 201);
@@ -49,6 +54,7 @@ class QuestionController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'difficulty' => $request->difficulty,
+            'is_placement' => $request->is_placement
         ]);
 
         return response()->json($question, 200);
@@ -57,6 +63,7 @@ class QuestionController extends Controller
     public function destroy($id)
     {
         $question = Question::findOrFail($id);
+
         $question->delete();
 
         return response()->json([
@@ -154,6 +161,28 @@ FORMAT:
             'message' => 'Questions generated successfully',
             'count' => count($created),
             'questions' => $created
+        ]);
+    }
+    public function progress($fieldId)
+    {
+        $user = auth()->user();
+
+        $totalQuestions = Question::where('field_id', $fieldId)->count();
+
+        $solvedQuestions = Submission::where('user_id', $user->id)
+            ->where('status', 'accepted')
+            ->whereHas('question', function ($q) use ($fieldId) {
+                $q->where('field_id', $fieldId);
+            })
+            ->distinct('question_id')
+            ->count('question_id');
+
+        return response()->json([
+            'solved' => $solvedQuestions,
+            'total' => $totalQuestions,
+            'progress' => $totalQuestions > 0
+                ? round(($solvedQuestions / $totalQuestions) * 100)
+                : 0
         ]);
     }
 }

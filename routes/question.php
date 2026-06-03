@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FieldController;
 use App\Http\Controllers\QuestionController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,4 +14,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/delete-questions/{id}', [QuestionController::class, 'destroy']);
         Route::post('/questions/ai-generate', [QuestionController::class, 'aiGenerate']);
     });
+    Route::get('/fields/{fieldId}/progress', [QuestionController::class, 'progress'])->middleware('role:trainer');
 });

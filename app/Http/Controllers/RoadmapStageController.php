@@ -10,8 +10,10 @@ class RoadmapStageController extends Controller
     public function show($id)
     {
         $stage = RoadmapStage::with('roadmap.field')->findOrFail($id);
+
         return response()->json($stage);
     }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -21,28 +23,55 @@ class RoadmapStageController extends Controller
             'roadmap_id' => 'required|exists:roadmaps,id',
         ]);
 
-        $stage = RoadmapStage::create($request->all());
+        $stage = RoadmapStage::create([
+            'stage_description' => $request->stage_description,
+            'stage_order' => $request->stage_order,
+            'requirements' => $request->requirements,
+            'roadmap_id' => $request->roadmap_id,
+        ]);;
+
         $stage->load('roadmap.field');
+
         return response()->json($stage, 201);
     }
+    public function index()
+    {
+        $stages = RoadmapStage::with('roadmap.field')->get();
+
+        return response()->json($stages);
+    }
+
     public function update(Request $request, $id)
     {
         $request->validate([
             'stage_description' => 'required|string',
             'stage_order' => 'required|integer',
-            'requirements' => 'nullable|string',
+            'requirements' => 'nullable|array',
             'roadmap_id' => 'required|exists:roadmaps,id',
         ]);
 
-        $stage = RoadmapStage::where('id', $id)->firstOrFail();
-        $stage->update($request->all());
+        $stage = RoadmapStage::findOrFail($id);
+
+        $stage->update([
+            'stage_description' => $request->stage_description,
+            'stage_order' => $request->stage_order,
+            'requirements' => $request->requirements,
+            'roadmap_id' => $request->roadmap_id,
+        ]);
+
         $stage->load('roadmap.field');
+
         return response()->json($stage);
     }
+
     public function destroy($id)
     {
         $stage = RoadmapStage::where('id', $id)->firstOrFail();
+
         $stage->delete();
-        return response()->json(['message' => 'Deleted']);
+
+        return response()->json([
+            'message' => 'Deleted'
+        ]);
     }
 }
