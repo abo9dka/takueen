@@ -19,19 +19,9 @@ class User extends Authenticatable
         return $this->hasMany(Submission::class);
     }
 
-    public function competitions()
+    public function roadmaps()
     {
-        return $this->hasMany(Competition::class);
-    }
-
-    public function projectSubmissions()
-    {
-        return $this->hasMany(ProjectSubmission::class);
-    }
-
-    public function fieldLevels()
-    {
-        return $this->hasMany(UserFieldLevel::class);
+        return $this->hasMany(Roadmap::class);
     }
 
     public function isTrainee(): bool

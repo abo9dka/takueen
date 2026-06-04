@@ -11,15 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('roadmap_stages', function (Blueprint $table) {
+        Schema::create('competition_user', function (Blueprint $table) {
             $table->id();
-            $table->text('stage_description');
-            $table->integer('stage_order');
-            $table->text('requirements')->nullable();
-            $table->foreignId('roadmap_id')
-                ->constrained('roadmaps')
-                ->cascadeOnDelete();
-
+            $table->foreignId('competition_id')
+                ->constrained()
+                ->onDelete('cascade');
+            $table->foreignId('user_id')
+                ->constrained()
+                ->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('roadmap_stages');
+        Schema::dropIfExists('competition_user');
     }
 };
